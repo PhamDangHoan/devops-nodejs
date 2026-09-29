@@ -1,6 +1,7 @@
 import pool from "../config/database.js";
 
-export const getAllProducts = async () => { 
+// Lấy toàn bộ danh sách sản phẩm, sắp xếp mới nhất lên đầu
+export const getAllProducts = async () => {
   const result = await pool.query(
     "SELECT * FROM products ORDER BY id DESC"
   );
@@ -8,6 +9,7 @@ export const getAllProducts = async () => {
   return result.rows;
 };
 
+// Tìm sản phẩm theo id
 export const getProductById = async (id) => {
   const result = await pool.query(
     "SELECT * FROM products WHERE id = $1",
@@ -17,6 +19,7 @@ export const getProductById = async (id) => {
   return result.rows[0];
 };
 
+// Tạo sản phẩm mới trong database
 export const createProduct = async ({
   name,
   description,
@@ -34,6 +37,7 @@ export const createProduct = async ({
   return result.rows[0];
 };
 
+// Cập nhật thông tin sản phẩm theo id
 export const updateProduct = async (
   id,
   { name, description, price, quantity }
@@ -54,6 +58,7 @@ export const updateProduct = async (
   return result.rows[0];
 };
 
+// Xóa sản phẩm theo id và trả về bản ghi vừa bị xóa
 export const deleteProduct = async (id) => {
   const result = await pool.query(
     "DELETE FROM products WHERE id = $1 RETURNING *",

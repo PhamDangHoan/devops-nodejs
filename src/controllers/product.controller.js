@@ -6,6 +6,7 @@ import {
   deleteProduct,
 } from "../models/product.model.js";
 
+// Lấy tất cả sản phẩm
 export const getProducts = async (req, res) => {
   try {
     const products = await getAllProducts();
@@ -24,6 +25,7 @@ export const getProducts = async (req, res) => {
   }
 };
 
+// Lấy chi tiết một sản phẩm theo id
 export const getProduct = async (req, res) => {
   try {
     const product = await getProductById(req.params.id);
@@ -49,6 +51,7 @@ export const getProduct = async (req, res) => {
   }
 };
 
+// Thêm một sản phẩm mới vào hệ thống
 export const addProduct = async (req, res) => {
   try {
     const {
@@ -58,6 +61,7 @@ export const addProduct = async (req, res) => {
       quantity,
     } = req.body;
 
+    // Kiểm tra dữ liệu đầu vào tối thiểu: tên và giá bắt buộc
     if (!name || price === undefined) {
       return res.status(400).json({
         success: false,
@@ -86,6 +90,7 @@ export const addProduct = async (req, res) => {
   }
 };
 
+// Cập nhật thông tin một sản phẩm theo id
 export const editProduct = async (req, res) => {
   try {
     const product = await updateProduct(
@@ -114,6 +119,7 @@ export const editProduct = async (req, res) => {
   }
 };
 
+// Xóa một sản phẩm theo id
 export const removeProduct = async (req, res) => {
   try {
     const product = await deleteProduct(req.params.id);

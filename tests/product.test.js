@@ -2,6 +2,7 @@ import request from "supertest";
 import app from "../src/app.js";
 import pool from "../src/config/database.js";
 
+// Kiểm thử API Health Check
 describe("Health API", () => {
   test("GET /health should return 200", async () => {
     const response = await request(app)
@@ -18,6 +19,7 @@ describe("Health API", () => {
   });
 });
 
+// Kiểm thử API quản lý sản phẩm
 describe("Product API", () => {
   test("GET /api/products should return 200", async () => {
     const response = await request(app)
@@ -30,6 +32,7 @@ describe("Product API", () => {
   });
 });
 
+// Đóng pool database sau khi chạy hết các test
 afterAll(async () => {
   await pool.end();
 });
