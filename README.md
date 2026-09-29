@@ -491,6 +491,8 @@ DELETE /api/products/:id ✓
 ## 19. Tác giả
 
 **Phạm Đăng Hoàn**
+**MSS:134010124044**
+**Lớp:WD1306**
 
 Project: **DevOps cho ứng dụng Web Node.js**
 
