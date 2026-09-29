@@ -14,75 +14,120 @@ jobs:
   # =========================
   # CI
   # =========================
- ci:
-  name: CI - Lint and Test
-  runs-on: ubuntu-latest
+  ci:
+    name: CI - Lint and Test
+    runs-on: ubuntu-latest
 
-  services:
-    postgres:
-      image: postgres:17-alpine
-      env:
-        POSTGRES_DB: devops_nodejs
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-      ports:
-        - 5432:5432
-      options: >-
-        --health-cmd="pg_isready -U postgres -d devops_nodejs"
-        --health-interval=5s
-        --health-timeout=5s
-        --health-retries=10
+    services:
+      postgres:
+        image: postgres:17
 
-  env:
-    DB_HOST: 127.0.0.1
-    DB_PORT: 5432
-    DB_NAME: devops_nodejs
-    DB_USER: postgres
-    DB_PASSWORD: postgres
+        env:
+          POSTGRES_DB: devops_nodejs
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
 
-  steps:
-    - name: Checkout source code
-      uses: actions/checkout@v6
+        ports:
+          - 5432:5432
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: "22"
-        cache: npm
+        options: >-
+          --health-cmd="pg_isready -U postgres -d devops_nodejs"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
 
-    - name: Install dependencies
-      run: npm ci
+    env:
+      PORT: 3000
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: devops_nodejs
+      DB_USER: postgres
+      DB_PASSWORD: postgres
 
-    - name: Initialize database
-      run: |
-        node -e "
-        import fs from 'fs';
-        import pg from 'pg';
+    steps:
 
-        const sql = fs.readFileSync(
-          'database/init.sql',
-          'utf8'
-        );
+      # =========================
+      # Checkout
+      # =========================
+      - name: Checkout source code
+        uses: actions/checkout@v6
 
-        const pool = new pg.Pool({
-          host: process.env.DB_HOST,
-          port: process.env.DB_PORT,
-          database: process.env.DB_NAME,
-          user: process.env.DB_USER,
-          password: process.env.DB_PASSWORD
-        });
+      # =========================
+      # Node.js
+      # =========================
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
 
-        await pool.query(sql);
-        await pool.end();
+      # =========================
+      # Install
+      # =========================
+      - name: Install dependencies
+        run: npm ci
 
-        console.log('Database initialized');
-        "
+      # =========================
+      # Check PostgreSQL
+      # =========================
+      - name: Check PostgreSQL
+        run: |
+          echo "Checking PostgreSQL connection..."
+          pg_isready \
+            -h 127.0.0.1 \
+            -p 5432 \
+            -U postgres \
+            -d devops_nodejs
 
-    - name: Run ESLint
-      run: npm run lint
+      # =========================
+      # Check environment
+      # =========================
+      - name: Check database environment
+        run: |
+          echo "DB_HOST=$DB_HOST"
+          echo "DB_PORT=$DB_PORT"
+          echo "DB_NAME=$DB_NAME"
+          echo "DB_USER=$DB_USER"
 
-    - name: Run tests
-      run: npm test
+      # =========================
+      # Initialize database
+      # =========================
+      - name: Initialize database
+        run: |
+          node -e "
+          import fs from 'fs';
+          import pg from 'pg';
+
+          const sql = fs.readFileSync(
+            'database/init.sql',
+            'utf8'
+          );
+
+          const pool = new pg.Pool({
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT,
+            database: process.env.DB_NAME,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD
+          });
+
+          await pool.query(sql);
+          await pool.end();
+
+          console.log('Database initialized successfully');
+          "
+
+      # =========================
+      # Lint
+      # =========================
+      - name: Run ESLint
+        run: npm run lint
+
+      # =========================
+      # Test
+      # =========================
+      - name: Run tests
+        run: npm test
 
 
   # =========================
@@ -90,6 +135,7 @@ jobs:
   # =========================
   docker:
     name: Build, Push and Deploy
+
     needs: ci
 
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -98,18 +144,30 @@ jobs:
 
     steps:
 
+      # =========================
+      # Checkout
+      # =========================
       - name: Checkout source code
         uses: actions/checkout@v6
 
+      # =========================
+      # Docker Buildx
+      # =========================
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      # =========================
+      # Docker Hub Login
+      # =========================
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # =========================
+      # Build & Push
+      # =========================
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
@@ -122,6 +180,9 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-nodejs:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-nodejs:${{ github.sha }}
 
+      # =========================
+      # Deploy Render
+      # =========================
       - name: Deploy to Render
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
