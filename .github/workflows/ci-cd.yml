@@ -9,11 +9,12 @@ on:
     branches:
       - main
 
+
 jobs:
 
-  # =========================
-  # CI
-  # =========================
+  # ========================================
+  # CI - LINT + TEST
+  # ========================================
   ci:
     name: CI - Lint and Test
     runs-on: ubuntu-latest
@@ -21,53 +22,81 @@ jobs:
     services:
       postgres:
         image: postgres:17
+
         env:
           POSTGRES_DB: devops_nodejs
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+
         ports:
           - 5432:5432
+
         options: >-
           --health-cmd="pg_isready -U postgres -d devops_nodejs"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
 
+
+    # Biến môi trường dùng cho toàn bộ job CI
+    env:
+      PORT: 3000
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: devops_nodejs
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
+
     steps:
+
+      # ========================================
+      # CHECKOUT
+      # ========================================
       - name: Checkout source code
         uses: actions/checkout@v6
 
+
+      # ========================================
+      # NODE.JS
+      # ========================================
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
 
+
+      # ========================================
+      # INSTALL DEPENDENCIES
+      # ========================================
       - name: Install dependencies
         run: npm ci
 
+
+      # ========================================
+      # CHECK POSTGRESQL
+      # ========================================
       - name: Check PostgreSQL
-        env:
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_NAME: devops_nodejs
-          DB_USER: postgres
-          DB_PASSWORD: postgres
         run: |
+          echo "Checking PostgreSQL..."
           echo "DB_HOST=$DB_HOST"
           echo "DB_PORT=$DB_PORT"
           echo "DB_NAME=$DB_NAME"
-          pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME"
 
+          pg_isready \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME"
+
+
+      # ========================================
+      # INITIALIZE DATABASE
+      # ========================================
       - name: Initialize database
-        env:
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_NAME: devops_nodejs
-          DB_USER: postgres
-          DB_PASSWORD: postgres
         run: |
-          node -e "
+          node --input-type=module -e "
           import fs from 'fs';
           import pg from 'pg';
 
@@ -90,78 +119,84 @@ jobs:
           console.log('Database initialized successfully');
           "
 
+
+      # ========================================
+      # ESLINT
+      # ========================================
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run tests
-        env:
-          PORT: 3000
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_NAME: devops_nodejs
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-        run: |
-          echo "Running tests with PostgreSQL:"
-          echo "DB_HOST=$DB_HOST"
-          echo "DB_PORT=$DB_PORT"
-          echo "DB_NAME=$DB_NAME"
-          echo "DB_USER=$DB_USER"
-          npm test
 
-  # =========================
-  # CD
-  # =========================
+      # ========================================
+      # TEST
+      # ========================================
+      - name: Run tests
+        run: npm test
+
+
+  # ========================================
+  # CD - DOCKER + RENDER
+  # ========================================
   docker:
     name: Build, Push and Deploy
 
     needs: ci
 
+    # Chỉ CD khi push trực tiếp lên main
+    # và CI đã thành công
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     runs-on: ubuntu-latest
 
+
     steps:
 
-      # =========================
-      # Checkout
-      # =========================
+      # ========================================
+      # CHECKOUT
+      # ========================================
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      # =========================
-      # Docker Buildx
-      # =========================
+
+      # ========================================
+      # DOCKER BUILDX
+      # ========================================
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # =========================
-      # Docker Hub Login
-      # =========================
+
+      # ========================================
+      # DOCKER HUB LOGIN
+      # ========================================
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # =========================
-      # Build & Push
-      # =========================
+
+      # ========================================
+      # BUILD + PUSH DOCKER IMAGE
+      # ========================================
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
+
         with:
           context: .
           file: ./Dockerfile
+
           platforms: linux/amd64
+
           push: true
 
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-nodejs:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-nodejs:${{ github.sha }}
 
-      # =========================
-      # Deploy Render
-      # =========================
+
+      # ========================================
+      # DEPLOY TO RENDER
+      # ========================================
       - name: Deploy to Render
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
