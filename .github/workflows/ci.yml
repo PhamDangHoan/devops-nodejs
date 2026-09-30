@@ -11,26 +11,122 @@ on:
       - main
       - develop
 
-jobs:
-  test:
 
+jobs:
+
+  test:
+    name: CI - Lint and Test
     runs-on: ubuntu-latest
 
+    # PostgreSQL cho GitHub Actions
+    services:
+      postgres:
+        image: postgres:17
+
+        env:
+          POSTGRES_DB: devops_nodejs
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd="pg_isready -U postgres -d devops_nodejs"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    # Environment cho Node.js/Jest
+    env:
+      PORT: 3000
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: devops_nodejs
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
     steps:
+
+      # =========================
+      # Checkout
+      # =========================
       - name: Checkout source code
         uses: actions/checkout@v6
 
+
+      # =========================
+      # Setup Node.js
+      # =========================
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: "22"
-          cache: "npm"
+          cache: npm
 
+
+      # =========================
+      # Install dependencies
+      # =========================
       - name: Install dependencies
         run: npm ci
 
+
+      # =========================
+      # Check PostgreSQL
+      # =========================
+      - name: Check PostgreSQL
+        run: |
+          echo "Checking PostgreSQL..."
+          echo "DB_HOST=$DB_HOST"
+          echo "DB_PORT=$DB_PORT"
+          echo "DB_NAME=$DB_NAME"
+
+          pg_isready \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME"
+
+
+      # =========================
+      # Initialize database
+      # =========================
+      - name: Initialize database
+        run: |
+          node --input-type=module -e "
+          import fs from 'fs';
+          import pg from 'pg';
+
+          const sql = fs.readFileSync(
+            'database/init.sql',
+            'utf8'
+          );
+
+          const pool = new pg.Pool({
+            host: process.env.DB_HOST,
+            port: Number(process.env.DB_PORT),
+            database: process.env.DB_NAME,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD
+          });
+
+          await pool.query(sql);
+          await pool.end();
+
+          console.log('Database initialized successfully');
+          "
+
+
+      # =========================
+      # ESLint
+      # =========================
       - name: Run ESLint
         run: npm run lint
 
+
+      # =========================
+      # Jest
+      # =========================
       - name: Run tests
         run: npm test
