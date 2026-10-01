@@ -9,36 +9,38 @@ Actions, Docker Hub và Render**.
 Project được thực hiện cho bài tập **DevOps cho ứng dụng Web Node.js**,
 tập trung vào:
 
--   Xây dựng REST API CRUD.
--   Sử dụng PostgreSQL làm cơ sở dữ liệu.
--   Quản lý cấu hình bằng biến môi trường `.env`.
--   Đóng gói ứng dụng bằng Docker.
--   Chạy Node.js và PostgreSQL bằng Docker Compose.
--   Tự động kiểm tra code bằng ESLint và Jest.
--   Tự động build và push Docker image lên Docker Hub.
--   Tự động deploy ứng dụng lên Render sau khi CI thành công.
--   Có endpoint `/health` để kiểm tra trạng thái ứng dụng.
+- Xây dựng REST API CRUD.
+- Sử dụng PostgreSQL làm cơ sở dữ liệu.
+- Quản lý cấu hình bằng biến môi trường `.env`.
+- Đóng gói ứng dụng bằng Docker.
+- Chạy Node.js và PostgreSQL bằng Docker Compose.
+- Tự động kiểm tra code bằng ESLint và Jest.
+- Tự động build và push Docker image lên Docker Hub.
+- Tự động deploy ứng dụng lên Render sau khi CI thành công.
+- Có endpoint `/health` để kiểm tra trạng thái ứng dụng.
 
 ## 2. Công nghệ sử dụng
 
-  Công nghệ        Vai trò
-  ---------------- --------------------------------
-  Node.js 22       Runtime cho backend
-  Express 5        Xây dựng REST API
-  PostgreSQL 17    Cơ sở dữ liệu
-  pg               Kết nối Node.js với PostgreSQL
-  Docker           Container hóa ứng dụng
-  Docker Compose   Chạy App + PostgreSQL
-  GitHub Actions   CI/CD
-  ESLint           Kiểm tra chất lượng code
-  Jest             Automated testing
-  Supertest        Test HTTP API
-  Docker Hub       Lưu trữ Docker image
-  Render           Deploy production
+Công nghệ Vai trò
+
+---
+
+Node.js 22 Runtime cho backend
+Express 5 Xây dựng REST API
+PostgreSQL 17 Cơ sở dữ liệu
+pg Kết nối Node.js với PostgreSQL
+Docker Container hóa ứng dụng
+Docker Compose Chạy App + PostgreSQL
+GitHub Actions CI/CD
+ESLint Kiểm tra chất lượng code
+Jest Automated testing
+Supertest Test HTTP API
+Docker Hub Lưu trữ Docker image
+Render Deploy production
 
 ## 3. Kiến trúc project
 
-``` text
+```text
 devops-nodejs/
 ├── src/
 │   ├── config/
@@ -73,22 +75,24 @@ devops-nodejs/
 
 Base URL local:
 
-``` text
+```text
 http://localhost:3000
 ```
 
-  Method   Endpoint              Chức năng
-  -------- --------------------- -------------------------
-  GET      `/health`             Kiểm tra trạng thái API
-  GET      `/api/products`       Lấy tất cả sản phẩm
-  GET      `/api/products/:id`   Lấy sản phẩm theo ID
-  POST     `/api/products`       Tạo sản phẩm
-  PUT      `/api/products/:id`   Cập nhật sản phẩm
-  DELETE   `/api/products/:id`   Xóa sản phẩm
+Method Endpoint Chức năng
+
+---
+
+GET `/health` Kiểm tra trạng thái API
+GET `/api/products` Lấy tất cả sản phẩm
+GET `/api/products/:id` Lấy sản phẩm theo ID
+POST `/api/products` Tạo sản phẩm
+PUT `/api/products/:id` Cập nhật sản phẩm
+DELETE `/api/products/:id` Xóa sản phẩm
 
 ### Ví dụ POST
 
-``` json
+```json
 {
   "name": "Laptop ASUS",
   "description": "Laptop phục vụ học tập và lập trình",
@@ -101,7 +105,7 @@ http://localhost:3000
 
 Tạo `.env`:
 
-``` env
+```env
 PORT=3000
 DB_HOST=localhost
 DB_PORT=5433
@@ -114,27 +118,27 @@ Không commit `.env` lên GitHub.
 
 Khi chạy bằng Docker Compose, app kết nối PostgreSQL bằng:
 
-``` text
+```text
 DB_HOST=postgres
 DB_PORT=5432
 ```
 
 ## 6. Chạy local
 
-``` powershell
+```powershell
 npm install
 npm run dev
 ```
 
 Production:
 
-``` powershell
+```powershell
 npm start
 ```
 
 API:
 
-``` text
+```text
 http://localhost:3000
 ```
 
@@ -142,31 +146,31 @@ http://localhost:3000
 
 Khởi động App + PostgreSQL:
 
-``` powershell
+```powershell
 docker compose up --build
 ```
 
 Kiểm tra:
 
-``` powershell
+```powershell
 docker compose ps
 ```
 
 Xem log:
 
-``` powershell
+```powershell
 docker compose logs -f
 ```
 
 Dừng:
 
-``` powershell
+```powershell
 docker compose down
 ```
 
 Xóa cả database volume:
 
-``` powershell
+```powershell
 docker compose down -v
 ```
 
@@ -177,13 +181,13 @@ docker compose down -v
 
 File khởi tạo:
 
-``` text
+```text
 database/init.sql
 ```
 
 Bảng chính:
 
-``` sql
+```sql
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -199,26 +203,26 @@ CREATE TABLE IF NOT EXISTS products (
 
 ESLint:
 
-``` powershell
+```powershell
 npm run lint
 ```
 
 Tự động sửa:
 
-``` powershell
+```powershell
 npm run lint:fix
 ```
 
 Jest:
 
-``` powershell
+```powershell
 npm test
 ```
 
 Test hiện có kiểm tra:
 
--   `GET /health`
--   `GET /api/products`
+- `GET /health`
+- `GET /api/products`
 
 ## 10. Docker
 
@@ -226,13 +230,13 @@ Dockerfile sử dụng multi-stage build với Node.js Alpine.
 
 Build:
 
-``` powershell
+```powershell
 docker build -t devops-nodejs .
 ```
 
 Run:
 
-``` powershell
+```powershell
 docker run --rm -p 3000:3000 --env-file .env devops-nodejs
 ```
 
@@ -240,13 +244,13 @@ docker run --rm -p 3000:3000 --env-file .env devops-nodejs
 
 Workflow:
 
-``` text
+```text
 .github/workflows/ci-cd.yml
 ```
 
 Pipeline:
 
-``` text
+```text
 Push / Pull Request
         ↓
 CI - Lint and Test
@@ -274,8 +278,8 @@ Render
 
 CI chạy khi:
 
--   Push vào `main`.
--   Pull Request vào `main`.
+- Push vào `main`.
+- Pull Request vào `main`.
 
 CD chỉ chạy sau khi CI thành công và workflow được kích hoạt bởi push
 vào `main`.
@@ -284,7 +288,7 @@ vào `main`.
 
 Vào:
 
-``` text
+```text
 GitHub
 → Repository
 → Settings
@@ -294,7 +298,7 @@ GitHub
 
 Tạo:
 
-``` text
+```text
 DOCKERHUB_USERNAME
 DOCKERHUB_TOKEN
 RENDER_DEPLOY_HOOK_URL
@@ -306,13 +310,13 @@ Không đưa token, password hoặc Render Deploy Hook vào source code.
 
 Docker image được push với:
 
-``` text
+```text
 pdhoandev/devops-nodejs:latest
 ```
 
 và:
 
-``` text
+```text
 pdhoandev/devops-nodejs:<commit-sha>
 ```
 
@@ -322,7 +326,7 @@ Tag theo commit SHA giúp xác định image được tạo từ commit nào.
 
 Production gồm:
 
-``` text
+```text
 Render Web Service
 +
 Render PostgreSQL
@@ -330,7 +334,7 @@ Render PostgreSQL
 
 Quy trình:
 
-``` text
+```text
 GitHub
   ↓
 GitHub Actions
@@ -354,13 +358,13 @@ port `5432`.
 
 Health:
 
-``` text
+```text
 https://<render-service-url>/health
 ```
 
 Expected:
 
-``` json
+```json
 {
   "success": true,
   "status": "OK",
@@ -370,13 +374,13 @@ Expected:
 
 Products:
 
-``` text
+```text
 https://<render-service-url>/api/products
 ```
 
 Expected:
 
-``` json
+```json
 {
   "success": true,
   "data": []
@@ -387,7 +391,7 @@ hoặc danh sách sản phẩm nếu database có dữ liệu.
 
 ## 16. Git workflow
 
-``` powershell
+```powershell
 git status
 git add .
 git commit -m "feat: update product API"
@@ -396,7 +400,7 @@ git push origin main
 
 Sau khi push:
 
-``` text
+```text
 GitHub
   ↓
 GitHub Actions
@@ -416,21 +420,21 @@ Render
 
 Node.js chạy trực tiếp trên Windows:
 
-``` env
+```env
 DB_HOST=localhost
 DB_PORT=5433
 ```
 
 Node.js chạy trong Docker Compose:
 
-``` text
+```text
 DB_HOST=postgres
 DB_PORT=5432
 ```
 
 ### Docker
 
-``` powershell
+```powershell
 docker version
 docker compose version
 docker compose ps
@@ -442,13 +446,13 @@ docker compose logs postgres
 
 Vào:
 
-``` text
+```text
 GitHub → Actions → CI/CD
 ```
 
 Kiểm tra:
 
-``` text
+```text
 CI - Lint and Test
 Build, Push and Deploy
 ```
@@ -459,7 +463,7 @@ Nếu CI fail thì CD không được triển khai.
 
 Hệ thống đã hoàn thành quy trình:
 
-``` text
+```text
 Developer
    ↓ git push
 GitHub
@@ -480,7 +484,7 @@ Render
 
 Các endpoint production đã kiểm tra:
 
-``` text
+```text
 GET /health              ✓
 GET /api/products        ✓
 POST /api/products       ✓
@@ -491,14 +495,14 @@ DELETE /api/products/:id ✓
 ## 19. Tác giả
 
 **Phạm Đăng Hoàn**
-**MSS:134010124044**
+**MSSV:134010124044**
 **Lớp:WD1306**
 
 Project: **DevOps cho ứng dụng Web Node.js**
 
 Stack:
 
-``` text
+```text
 Node.js + Express
 PostgreSQL
 Docker
