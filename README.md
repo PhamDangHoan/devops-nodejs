@@ -359,7 +359,7 @@ port `5432`.
 Health:
 
 ```text
-https://<render-service-url>/health
+https://https://devops-nodejs-6xg2.onrender.com/health
 ```
 
 Expected:
@@ -375,7 +375,7 @@ Expected:
 Products:
 
 ```text
-https://<render-service-url>/api/products
+https://https://devops-nodejs-6xg2.onrender.com/api/products
 ```
 
 Expected:
